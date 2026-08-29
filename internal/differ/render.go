@@ -2,35 +2,18 @@ package differ
 
 import (
 	"fmt"
-	"os"
 	"strings"
 
 	"charm.land/lipgloss/v2"
+	"github.com/josh-allan/go-git/internal/ui"
 	"github.com/mattn/go-runewidth"
 )
 
 var (
-	hasDarkBG = lipgloss.HasDarkBackground(os.Stdin, os.Stderr)
-	lightDark = lipgloss.LightDark(hasDarkBG)
-
-	fileStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lightDark(lipgloss.Color("#6C5CE7"), lipgloss.Color("#A29BFE")))
-
-	hunkStyle = lipgloss.NewStyle().
-			Foreground(lightDark(lipgloss.Color("#636E72"), lipgloss.Color("#B2BEC3")))
-
-	addedStyle = lipgloss.NewStyle().
-			Foreground(lightDark(lipgloss.Color("#00B894"), lipgloss.Color("#55EFC4")))
-
-	removedStyle = lipgloss.NewStyle().
-			Foreground(lightDark(lipgloss.Color("#D63031"), lipgloss.Color("#FF7675")))
-
-	lineNumStyle = lipgloss.NewStyle().
-			Foreground(lightDark(lipgloss.Color("#636E72"), lipgloss.Color("#636E72")))
-
-	separatorStyle = lipgloss.NewStyle().
-			Foreground(lightDark(lipgloss.Color("#636E72"), lipgloss.Color("#636E72")))
+	fileStyle    = lipgloss.NewStyle().Bold(true).Foreground(ui.Purple)
+	hunkStyle    = lipgloss.NewStyle().Foreground(ui.DimGray)
+	addedStyle   = lipgloss.NewStyle().Foreground(ui.Green)
+	removedStyle = lipgloss.NewStyle().Foreground(ui.Red)
 )
 
 type sidePair struct {
@@ -78,7 +61,7 @@ func renderHunk(b *strings.Builder, hunk Hunk, termWidth int) {
 	b.WriteString("\n")
 
 	pairs := alignLines(hunk)
-	colWidth := (termWidth - 3) / 2 // 3 for " │ " separator
+	colWidth := (termWidth - 3) / 2
 	numWidth := 4
 
 	for _, p := range pairs {
@@ -101,7 +84,7 @@ func renderHunk(b *strings.Builder, hunk Hunk, termWidth int) {
 				right = rightLines[row]
 			}
 			b.WriteString(left)
-			b.WriteString(separatorStyle.Render(" │ "))
+			b.WriteString(ui.SeparatorStyle.Render(" │ "))
 			b.WriteString(right)
 			b.WriteString("\n")
 		}
@@ -128,7 +111,6 @@ func alignLines(hunk Hunk) []sidePair {
 			i++
 
 		case LineRemoved:
-			// collect consecutive removed lines, then pair with following added lines
 			var removed []int
 			for i < len(hunk.Lines) && hunk.Lines[i].Type == LineRemoved {
 				removed = append(removed, i)
@@ -192,8 +174,8 @@ func wrapSide(num int, line *Line, numWidth, colWidth int) []string {
 		style = lipgloss.NewStyle()
 	}
 
-	content := expandTabs(line.Content, 4)
-	chunks := wrapText(content, contentWidth)
+	content := ui.ExpandTabs(line.Content, 4)
+	chunks := ui.WrapText(content, contentWidth)
 	if len(chunks) == 0 {
 		chunks = []string{""}
 	}
@@ -210,50 +192,7 @@ func wrapSide(num int, line *Line, numWidth, colWidth int) []string {
 			padding = 0
 		}
 
-		result[i] = lineNumStyle.Render(prefix) + " " + style.Render(chunk) + strings.Repeat(" ", padding)
+		result[i] = ui.LineNumStyle.Render(prefix) + " " + style.Render(chunk) + strings.Repeat(" ", padding)
 	}
 	return result
-}
-
-func wrapText(s string, width int) []string {
-	if runewidth.StringWidth(s) <= width {
-		return []string{s}
-	}
-
-	var lines []string
-	runes := []rune(s)
-	for len(runes) > 0 {
-		w := 0
-		cut := 0
-		for i, r := range runes {
-			rw := runewidth.RuneWidth(r)
-			if w+rw > width {
-				break
-			}
-			w += rw
-			cut = i + 1
-		}
-		if cut == 0 {
-			cut = 1
-		}
-		lines = append(lines, string(runes[:cut]))
-		runes = runes[cut:]
-	}
-	return lines
-}
-
-func expandTabs(s string, tabWidth int) string {
-	var b strings.Builder
-	col := 0
-	for _, r := range s {
-		if r == '\t' {
-			spaces := tabWidth - (col % tabWidth)
-			b.WriteString(strings.Repeat(" ", spaces))
-			col += spaces
-		} else {
-			b.WriteRune(r)
-			col++
-		}
-	}
-	return b.String()
 }

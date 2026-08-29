@@ -1,14 +1,15 @@
 ## Go-git
 
-This is a trimmed-down Go port of @viqueen's [git workspaces](https://github.com/viqueen/git-workspaces):
+This started as a direct port of @viqueen's [git workspaces](https://github.com/viqueen/git-workspaces):
 
 * `git-recent` -- list most recent git branches
 * `git-squashed` -- list (and delete) all squashed branches
 * `git-merged` -- list (and delete) all merged branches
 
-It also includes a new command:
+With some new commands added in:
 
 * `git-differ` -- a side-by-side diff pager, which also covers `--cached` and `--stat`
+* `git-who` -- retrieve ownership / committer statistics about a repo, directory or file
 
 ## Building it
 

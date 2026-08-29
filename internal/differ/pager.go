@@ -7,11 +7,11 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/josh-allan/go-git/internal/ui"
 )
 
 type pager struct {
 	viewport viewport.Model
-	ready    bool
 	content  string
 }
 
@@ -21,7 +21,6 @@ func newPager(content string, width, height int) pager {
 
 	return pager{
 		viewport: vp,
-		ready:    true,
 		content:  content,
 	}
 }
@@ -63,8 +62,8 @@ func (p pager) statusLine() string {
 	}
 
 	style := lipgloss.NewStyle().
-		Foreground(lightDark(lipgloss.Color("#FAFAFA"), lipgloss.Color("#FAFAFA"))).
-		Background(lightDark(lipgloss.Color("#636E72"), lipgloss.Color("#2D3436")))
+		Foreground(ui.StatusFg).
+		Background(ui.StatusBg)
 
 	return style.Render(help + strings.Repeat(" ", gap) + info)
 }
