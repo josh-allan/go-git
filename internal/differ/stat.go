@@ -43,9 +43,15 @@ func RenderStat(files []DiffFile, termWidth int) string {
 		}
 	}
 
-	barWidth := termWidth - maxNameLen - 15
-	if barWidth < 10 {
-		barWidth = 10
+	maxBarWidth := termWidth - maxNameLen - 15
+	if maxBarWidth < 10 {
+		maxBarWidth = 10
+	}
+	// git caps the graph at the available width, scaling down only when
+	// the largest change count exceeds it
+	scale := maxBarWidth
+	if maxChanges > maxBarWidth {
+		scale = maxChanges
 	}
 
 	var b strings.Builder
@@ -57,8 +63,8 @@ func RenderStat(files []DiffFile, termWidth int) string {
 
 		total := s.added + s.removed
 		bar := ""
-		if maxChanges > 0 && total > 0 {
-			width := total * barWidth / maxChanges
+		if total > 0 {
+			width := total * maxBarWidth / scale
 			if width < 1 {
 				width = 1
 			}

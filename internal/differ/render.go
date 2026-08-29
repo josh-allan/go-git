@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
+	"github.com/mattn/go-runewidth"
 )
 
 var (
@@ -160,14 +161,12 @@ func formatSide(num int, line *Line, numWidth, colWidth int) string {
 	}
 
 	numStr := fmt.Sprintf("%*d", numWidth, num)
-	content := line.Content
+	content := expandTabs(line.Content, 4)
 
 	contentWidth := colWidth - numWidth - 1
-	if len(content) > contentWidth {
-		content = content[:contentWidth]
-	}
+	content = runewidth.Truncate(content, contentWidth, "")
 
-	padding := contentWidth - len(content)
+	padding := contentWidth - runewidth.StringWidth(content)
 	if padding < 0 {
 		padding = 0
 	}
@@ -183,4 +182,20 @@ func formatSide(num int, line *Line, numWidth, colWidth int) string {
 	}
 
 	return lineNumStyle.Render(numStr) + " " + style.Render(content) + strings.Repeat(" ", padding)
+}
+
+func expandTabs(s string, tabWidth int) string {
+	var b strings.Builder
+	col := 0
+	for _, r := range s {
+		if r == '\t' {
+			spaces := tabWidth - (col % tabWidth)
+			b.WriteString(strings.Repeat(" ", spaces))
+			col += spaces
+		} else {
+			b.WriteRune(r)
+			col++
+		}
+	}
+	return b.String()
 }
