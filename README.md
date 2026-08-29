@@ -12,15 +12,30 @@ With some new commands added in:
 * `git-who` -- file ownership and contributor breakdown by repo, directory, or file
 * `git-catchup` -- what changed on a branch since you last looked
 
-## Building it
+## Installation
 
-Requires at minimum Go 1.26
+Requires Go 1.26+
+
+```
+go install ./cmd/...
+```
+
+This installs all binaries to your `GOBIN` (typically `~/go/bin`). Make sure that's on your `PATH`.
+
+With [mise](https://mise.jdx.dev):
 
 ```
 mise run install
 ```
 
 ## Contributing
+
+```
+go install golang.org/x/tools/cmd/goimports@latest
+git config core.hooksPath .githooks
+```
+
+Or with mise:
 
 ```
 mise run setup
