@@ -82,12 +82,29 @@ func renderHunk(b *strings.Builder, hunk Hunk, termWidth int) {
 	numWidth := 4
 
 	for _, p := range pairs {
-		left := formatSide(p.leftNum, p.leftLine, numWidth, colWidth)
-		right := formatSide(p.rightNum, p.rightLine, numWidth, colWidth)
-		b.WriteString(left)
-		b.WriteString(separatorStyle.Render(" │ "))
-		b.WriteString(right)
-		b.WriteString("\n")
+		leftLines := wrapSide(p.leftNum, p.leftLine, numWidth, colWidth)
+		rightLines := wrapSide(p.rightNum, p.rightLine, numWidth, colWidth)
+
+		rows := len(leftLines)
+		if len(rightLines) > rows {
+			rows = len(rightLines)
+		}
+
+		blank := strings.Repeat(" ", colWidth)
+		for row := range rows {
+			left := blank
+			if row < len(leftLines) {
+				left = leftLines[row]
+			}
+			right := blank
+			if row < len(rightLines) {
+				right = rightLines[row]
+			}
+			b.WriteString(left)
+			b.WriteString(separatorStyle.Render(" │ "))
+			b.WriteString(right)
+			b.WriteString("\n")
+		}
 	}
 }
 
@@ -155,20 +172,14 @@ func alignLines(hunk Hunk) []sidePair {
 	return pairs
 }
 
-func formatSide(num int, line *Line, numWidth, colWidth int) string {
+func wrapSide(num int, line *Line, numWidth, colWidth int) []string {
 	if line == nil {
-		return strings.Repeat(" ", colWidth)
+		return []string{strings.Repeat(" ", colWidth)}
 	}
 
-	numStr := fmt.Sprintf("%*d", numWidth, num)
-	content := expandTabs(line.Content, 4)
-
 	contentWidth := colWidth - numWidth - 1
-	content = runewidth.Truncate(content, contentWidth, "")
-
-	padding := contentWidth - runewidth.StringWidth(content)
-	if padding < 0 {
-		padding = 0
+	if contentWidth < 1 {
+		contentWidth = 1
 	}
 
 	var style lipgloss.Style
@@ -181,7 +192,54 @@ func formatSide(num int, line *Line, numWidth, colWidth int) string {
 		style = lipgloss.NewStyle()
 	}
 
-	return lineNumStyle.Render(numStr) + " " + style.Render(content) + strings.Repeat(" ", padding)
+	content := expandTabs(line.Content, 4)
+	chunks := wrapText(content, contentWidth)
+	if len(chunks) == 0 {
+		chunks = []string{""}
+	}
+
+	result := make([]string, len(chunks))
+	for i, chunk := range chunks {
+		prefix := strings.Repeat(" ", numWidth)
+		if i == 0 {
+			prefix = fmt.Sprintf("%*d", numWidth, num)
+		}
+
+		padding := contentWidth - runewidth.StringWidth(chunk)
+		if padding < 0 {
+			padding = 0
+		}
+
+		result[i] = lineNumStyle.Render(prefix) + " " + style.Render(chunk) + strings.Repeat(" ", padding)
+	}
+	return result
+}
+
+func wrapText(s string, width int) []string {
+	if runewidth.StringWidth(s) <= width {
+		return []string{s}
+	}
+
+	var lines []string
+	runes := []rune(s)
+	for len(runes) > 0 {
+		w := 0
+		cut := 0
+		for i, r := range runes {
+			rw := runewidth.RuneWidth(r)
+			if w+rw > width {
+				break
+			}
+			w += rw
+			cut = i + 1
+		}
+		if cut == 0 {
+			cut = 1
+		}
+		lines = append(lines, string(runes[:cut]))
+		runes = runes[cut:]
+	}
+	return lines
 }
 
 func expandTabs(s string, tabWidth int) string {
