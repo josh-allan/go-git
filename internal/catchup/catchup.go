@@ -118,10 +118,10 @@ func parseLog(output, branch, since string) (*Summary, error) {
 		authors  map[string]int
 	}
 	type authorAgg struct {
-		name    string
+		name     string
 		lastSeen time.Time
-		commits int
-		paths   map[string]int
+		commits  int
+		paths    map[string]int
 	}
 
 	fileMap := make(map[string]*fileAgg)

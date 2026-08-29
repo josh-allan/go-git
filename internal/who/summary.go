@@ -70,11 +70,11 @@ func RunSummary(repo *git.Repo, paths ...string) ([]FileSummary, error) {
 				item := indexedSummary{
 					index: i,
 					fs: FileSummary{
-						Path:       files[i],
-						Author:     parts[0],
+						Path:        files[i],
+						Author:      parts[0],
 						AuthorEmail: parts[1],
-						AuthorTime: time.Unix(ts, 0),
-						Summary:    parts[3],
+						AuthorTime:  time.Unix(ts, 0),
+						Summary:     parts[3],
 					},
 				}
 				mu.Lock()
