@@ -10,16 +10,17 @@ import (
 )
 
 type BlameLine struct {
-	Hash       string
-	Author     string
-	AuthorTime time.Time
-	Summary    string
-	LineNo     int
-	Content    string
+	Hash        string
+	Author      string
+	AuthorEmail string
+	AuthorTime  time.Time
+	Summary     string
+	LineNo      int
+	Content     string
 }
 
 func Run(repo *git.Repo, file string) ([]BlameLine, error) {
-	output, err := repo.Git("blame", "--porcelain", "--use-mailmap", file)
+	output, err := repo.Git("blame", "--porcelain", file)
 	if err != nil {
 		return nil, fmt.Errorf("running git blame: %w", err)
 	}
@@ -58,12 +59,13 @@ func parsePorcelain(raw string) []BlameLine {
 
 		if strings.HasPrefix(line, "\t") {
 			result = append(result, BlameLine{
-				Hash:       current.hash,
-				Author:     current.author,
-				AuthorTime: current.authorTime,
-				Summary:    current.summary,
-				LineNo:     lineNo,
-				Content:    line[1:],
+				Hash:        current.hash,
+				Author:      current.author,
+				AuthorEmail: current.authorEmail,
+				AuthorTime:  current.authorTime,
+				Summary:     current.summary,
+				LineNo:      lineNo,
+				Content:     line[1:],
 			})
 			continue
 		}
@@ -76,6 +78,8 @@ func parsePorcelain(raw string) []BlameLine {
 		switch key {
 		case "author":
 			current.author = val
+		case "author-mail":
+			current.authorEmail = strings.Trim(val, "<>")
 		case "author-time":
 			ts, _ := strconv.ParseInt(val, 10, 64)
 			current.authorTime = time.Unix(ts, 0)
@@ -88,10 +92,11 @@ func parsePorcelain(raw string) []BlameLine {
 }
 
 type commitInfo struct {
-	hash       string
-	author     string
-	authorTime time.Time
-	summary    string
+	hash        string
+	author      string
+	authorEmail string
+	authorTime  time.Time
+	summary     string
 }
 
 func isHexPrefix(s string) bool {

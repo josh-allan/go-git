@@ -13,10 +13,11 @@ import (
 )
 
 type FileSummary struct {
-	Path       string
-	Author     string
-	AuthorTime time.Time
-	Summary    string
+	Path        string
+	Author      string
+	AuthorEmail string
+	AuthorTime  time.Time
+	Summary     string
 }
 
 func RunSummary(repo *git.Repo, paths ...string) ([]FileSummary, error) {
@@ -57,22 +58,23 @@ func RunSummary(repo *git.Repo, paths ...string) ([]FileSummary, error) {
 		go func() {
 			defer wg.Done()
 			for i := range ch {
-				out, err := repo.Git("log", "-1", "--format=%aN%x00%at%x00%s", "--", files[i])
+				out, err := repo.Git("log", "-1", "--format=%an%x00%aE%x00%at%x00%s", "--", files[i])
 				if err != nil || strings.TrimSpace(out) == "" {
 					continue
 				}
-				parts := strings.SplitN(strings.TrimSpace(out), "\x00", 3)
-				if len(parts) < 3 {
+				parts := strings.SplitN(strings.TrimSpace(out), "\x00", 4)
+				if len(parts) < 4 {
 					continue
 				}
-				ts, _ := strconv.ParseInt(parts[1], 10, 64)
+				ts, _ := strconv.ParseInt(parts[2], 10, 64)
 				item := indexedSummary{
 					index: i,
 					fs: FileSummary{
 						Path:       files[i],
 						Author:     parts[0],
+						AuthorEmail: parts[1],
 						AuthorTime: time.Unix(ts, 0),
-						Summary:    parts[2],
+						Summary:    parts[3],
 					},
 				}
 				mu.Lock()

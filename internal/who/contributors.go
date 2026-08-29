@@ -29,28 +29,34 @@ func RunContributors(repo *git.Repo, file string) ([]Contributor, error) {
 	}
 
 	type stats struct {
+		name       string
 		lines      int
 		lastActive time.Time
 	}
 
-	byAuthor := make(map[string]*stats)
+	byEmail := make(map[string]*stats)
 	for _, l := range lines {
-		s, ok := byAuthor[l.Author]
+		email := l.AuthorEmail
+		if email == "" {
+			email = l.Author
+		}
+		s, ok := byEmail[email]
 		if !ok {
-			s = &stats{}
-			byAuthor[l.Author] = s
+			s = &stats{name: l.Author}
+			byEmail[email] = s
 		}
 		s.lines++
 		if l.AuthorTime.After(s.lastActive) {
 			s.lastActive = l.AuthorTime
+			s.name = l.Author
 		}
 	}
 
 	total := len(lines)
 	var result []Contributor
-	for author, s := range byAuthor {
+	for _, s := range byEmail {
 		result = append(result, Contributor{
-			Author:     author,
+			Author:     s.name,
 			Lines:      s.lines,
 			Percentage: float64(s.lines) / float64(total) * 100,
 			LastActive: s.lastActive,

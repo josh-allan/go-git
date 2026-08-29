@@ -45,7 +45,7 @@ type AuthorSummary struct {
 }
 
 func Run(repo *git.Repo, branch, since string) (*Summary, error) {
-	logArgs := []string{"log", "--format=%H%x00%an%x00%aI%x00%s", "--numstat"}
+	logArgs := []string{"log", "--format=%H%x00%an%x00%aE%x00%aI%x00%s", "--numstat"}
 	if since != "" {
 		logArgs = append(logArgs, "--since="+since)
 	}
@@ -70,9 +70,10 @@ func Run(repo *git.Repo, branch, since string) (*Summary, error) {
 }
 
 type parsedCommit struct {
-	author string
-	time   time.Time
-	files  map[string][2]int
+	author      string
+	authorEmail string
+	time        time.Time
+	files       map[string][2]int
 }
 
 func parseLog(output, branch, since string) (*Summary, error) {
@@ -87,10 +88,10 @@ func parseLog(output, branch, since string) (*Summary, error) {
 			continue
 		}
 
-		parts := strings.SplitN(line, "\x00", 4)
-		if len(parts) == 4 {
-			t, _ := time.Parse(time.RFC3339, parts[2])
-			commits = append(commits, parsedCommit{author: parts[1], time: t, files: make(map[string][2]int)})
+		parts := strings.SplitN(line, "\x00", 5)
+		if len(parts) == 5 {
+			t, _ := time.Parse(time.RFC3339, parts[3])
+			commits = append(commits, parsedCommit{author: parts[1], authorEmail: parts[2], time: t, files: make(map[string][2]int)})
 			cur = &commits[len(commits)-1]
 			continue
 		}
@@ -117,6 +118,8 @@ func parseLog(output, branch, since string) (*Summary, error) {
 		authors  map[string]int
 	}
 	type authorAgg struct {
+		name    string
+		lastSeen time.Time
 		commits int
 		paths   map[string]int
 	}
@@ -133,12 +136,21 @@ func parseLog(output, branch, since string) (*Summary, error) {
 			latest = c.time
 		}
 
-		a := authorMap[c.author]
+		email := c.authorEmail
+		if email == "" {
+			email = c.author
+		}
+
+		a := authorMap[email]
 		if a == nil {
-			a = &authorAgg{paths: make(map[string]int)}
-			authorMap[c.author] = a
+			a = &authorAgg{name: c.author, paths: make(map[string]int)}
+			authorMap[email] = a
 		}
 		a.commits++
+		if c.time.After(a.lastSeen) {
+			a.lastSeen = c.time
+			a.name = c.author
+		}
 
 		for path, stat := range c.files {
 			f := fileMap[path]
@@ -148,18 +160,23 @@ func parseLog(output, branch, since string) (*Summary, error) {
 			}
 			f.add += stat[0]
 			f.del += stat[1]
-			f.authors[c.author]++
+			f.authors[email]++
 			a.paths[path]++
 		}
 	}
 
 	files := make([]FileChurn, 0, len(fileMap))
 	for path, f := range fileMap {
+		topEmail := maxKey(f.authors)
+		topName := topEmail
+		if a := authorMap[topEmail]; a != nil {
+			topName = a.name
+		}
 		files = append(files, FileChurn{
 			Path:      path,
 			Additions: f.add,
 			Deletions: f.del,
-			TopAuthor: maxKey(f.authors),
+			TopAuthor: topName,
 		})
 	}
 	sort.Slice(files, func(i, j int) bool {
@@ -167,9 +184,9 @@ func parseLog(output, branch, since string) (*Summary, error) {
 	})
 
 	authors := make([]AuthorSummary, 0, len(authorMap))
-	for name, a := range authorMap {
+	for _, a := range authorMap {
 		authors = append(authors, AuthorSummary{
-			Name:    name,
+			Name:    a.name,
 			Commits: a.commits,
 			TopPath: maxKey(a.paths),
 		})

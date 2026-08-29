@@ -34,4 +34,4 @@ depends = ["fmt", "vet", "lint", "build"]
 
 [tasks.install]
 description = "Install all binaries to GOBIN"
-run = "go install ./cmd/..."
+run = "GOBIN=${GOBIN:-$HOME/go/bin} go install ./cmd/..."
