@@ -2,11 +2,8 @@ package who
 
 import (
 	"fmt"
-	"runtime"
-	"slices"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/josh-allan/go-git/pkg/git"
@@ -33,64 +30,82 @@ func RunSummary(repo *git.Repo, paths ...string) ([]FileSummary, error) {
 		return nil, nil
 	}
 
-	workers := runtime.NumCPU()
-	if workers > 16 {
-		workers = 16
+	remaining := make(map[string]struct{}, len(files))
+	for _, f := range files {
+		remaining[f] = struct{}{}
 	}
 
-	type indexedSummary struct {
-		index int
-		fs    FileSummary
+	type commitHeader struct {
+		author      string
+		authorEmail string
+		authorTime  time.Time
+		summary     string
 	}
 
-	ch := make(chan int, len(files))
-	for i := range files {
-		ch <- i
+	seen := make(map[string]*commitHeader, len(files))
+
+	// Walk the log once with --name-only. Each commit appears as:
+	//   author\x00email\x00timestamp\x00subject
+	//   <blank line>
+	//   file1
+	//   file2
+	//   <blank line>
+	logOutput, err := repo.Git("log", "--format=%an%x00%aE%x00%at%x00%s", "--name-only", "--diff-filter=ACDMRT")
+	if err != nil {
+		return nil, fmt.Errorf("running git log: %w", err)
 	}
-	close(ch)
 
-	var mu sync.Mutex
-	var collected []indexedSummary
-	var wg sync.WaitGroup
+	lines := strings.Split(logOutput, "\n")
+	var cur *commitHeader
 
-	for range workers {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
-			for i := range ch {
-				out, err := repo.Git("log", "-1", "--format=%an%x00%aE%x00%at%x00%s", "--", files[i])
-				if err != nil || strings.TrimSpace(out) == "" {
-					continue
-				}
-				parts := strings.SplitN(strings.TrimSpace(out), "\x00", 4)
-				if len(parts) < 4 {
-					continue
-				}
-				ts, _ := strconv.ParseInt(parts[2], 10, 64)
-				item := indexedSummary{
-					index: i,
-					fs: FileSummary{
-						Path:        files[i],
-						Author:      parts[0],
-						AuthorEmail: parts[1],
-						AuthorTime:  time.Unix(ts, 0),
-						Summary:     parts[3],
-					},
-				}
-				mu.Lock()
-				collected = append(collected, item)
-				mu.Unlock()
+	for _, line := range lines {
+		if len(remaining) == 0 {
+			break
+		}
+
+		line = strings.TrimRight(line, "\r")
+
+		if line == "" {
+			continue
+		}
+
+		parts := strings.SplitN(line, "\x00", 4)
+		if len(parts) == 4 {
+			ts, _ := strconv.ParseInt(parts[2], 10, 64)
+			cur = &commitHeader{
+				author:      parts[0],
+				authorEmail: parts[1],
+				authorTime:  time.Unix(ts, 0),
+				summary:     parts[3],
 			}
-		}()
-	}
-	wg.Wait()
+			continue
+		}
 
-	slices.SortFunc(collected, func(a, b indexedSummary) int {
-		return a.index - b.index
-	})
-	result := make([]FileSummary, len(collected))
-	for i, s := range collected {
-		result[i] = s.fs
+		if cur == nil {
+			continue
+		}
+
+		if _, tracked := remaining[line]; tracked {
+			if _, already := seen[line]; !already {
+				seen[line] = cur
+				delete(remaining, line)
+			}
+		}
+	}
+
+	result := make([]FileSummary, 0, len(seen))
+	for _, f := range files {
+		c, ok := seen[f]
+		if !ok {
+			continue
+		}
+		result = append(result, FileSummary{
+			Path:        f,
+			Author:      c.author,
+			AuthorEmail: c.authorEmail,
+			AuthorTime:  c.authorTime,
+			Summary:     c.summary,
+		})
 	}
 
 	return result, nil
