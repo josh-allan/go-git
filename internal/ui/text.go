@@ -22,6 +22,21 @@ func ExpandTabs(s string, tabWidth int) string {
 	return b.String()
 }
 
+// ScaledBarWidth returns a bar length for value given maxValue and available
+// width. Small values produce small bars; bars only compress when maxValue
+// exceeds the available width.
+func ScaledBarWidth(value, maxValue, availableWidth int) int {
+	scale := availableWidth
+	if maxValue > availableWidth {
+		scale = maxValue
+	}
+	bar := value * availableWidth / scale
+	if bar < 1 && value > 0 {
+		bar = 1
+	}
+	return bar
+}
+
 func WrapText(s string, width int) []string {
 	if runewidth.StringWidth(s) <= width {
 		return []string{s}

@@ -95,10 +95,7 @@ func RenderContributors(contribs []Contributor, file string, termWidth int) stri
 	for i, c := range contribs {
 		author := runewidth.Truncate(c.Author, maxAuthor, "…")
 
-		barLen := c.Lines * barMax / topLines
-		if barLen < 1 {
-			barLen = 1
-		}
+		barLen := ui.ScaledBarWidth(c.Lines, topLines, barMax)
 
 		palette := ui.CommitPalette[i%len(ui.CommitPalette)]
 		barColor := ui.C(palette.Light, palette.Dark)

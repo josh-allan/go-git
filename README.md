@@ -9,7 +9,8 @@ This started as a direct port of @viqueen's [git workspaces](https://github.com/
 With some new commands added in:
 
 * `git-differ` -- a side-by-side diff pager, which also covers `--cached` and `--stat`
-* `git-who` -- retrieve ownership / committer statistics about a repo, directory or file
+* `git-who` -- file ownership and contributor breakdown by repo, directory, or file
+* `git-catchup` -- what changed on a branch since you last looked
 
 ## Building it
 
@@ -24,6 +25,3 @@ mise run install
 ```
 mise run setup 
 ```
-
-[This](2026-08-29_this.md) installs both goimports and configures the relevant git hooks.
-

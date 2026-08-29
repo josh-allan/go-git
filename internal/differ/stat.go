@@ -3,6 +3,8 @@ package differ
 import (
 	"fmt"
 	"strings"
+
+	"github.com/josh-allan/go-git/internal/ui"
 )
 
 func RenderStat(files []DiffFile, termWidth int) string {
@@ -47,13 +49,6 @@ func RenderStat(files []DiffFile, termWidth int) string {
 	if maxBarWidth < 10 {
 		maxBarWidth = 10
 	}
-	// git caps the graph at the available width, scaling down only when
-	// the largest change count exceeds it
-	scale := maxBarWidth
-	if maxChanges > maxBarWidth {
-		scale = maxChanges
-	}
-
 	var b strings.Builder
 	totalAdded, totalRemoved := 0, 0
 
@@ -64,10 +59,7 @@ func RenderStat(files []DiffFile, termWidth int) string {
 		total := s.added + s.removed
 		bar := ""
 		if total > 0 {
-			width := total * maxBarWidth / scale
-			if width < 1 {
-				width = 1
-			}
+			width := ui.ScaledBarWidth(total, maxChanges, maxBarWidth)
 			addBar := s.added * width / total
 			remBar := width - addBar
 
