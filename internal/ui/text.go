@@ -26,11 +26,17 @@ func ExpandTabs(s string, tabWidth int) string {
 // width. Small values produce small bars; bars only compress when maxValue
 // exceeds the available width.
 func ScaledBarWidth(value, maxValue, availableWidth int) int {
-	scale := availableWidth
-	if maxValue > availableWidth {
-		scale = maxValue
+	if availableWidth <= 0 {
+		return 0
+	}
+	scale := maxValue
+	if scale < availableWidth {
+		scale = availableWidth
 	}
 	bar := value * availableWidth / scale
+	if bar > availableWidth {
+		bar = availableWidth
+	}
 	if bar < 1 && value > 0 {
 		bar = 1
 	}

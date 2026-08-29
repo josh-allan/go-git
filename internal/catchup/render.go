@@ -114,12 +114,14 @@ func renderDirs(b *strings.Builder, dirs []DirChurn, termWidth int) {
 		path := runewidth.Truncate(d.Path, maxPath, "…")
 		churn := d.Additions + d.Deletions
 
-		barLen := ui.ScaledBarWidth(churn, maxChurn, barMax)
-		addBar := d.Additions * barLen / churn
-		delBar := barLen - addBar
-
-		bar := addStyle.Render(strings.Repeat("+", addBar)) +
-			delStyle.Render(strings.Repeat("-", delBar))
+		bar := ""
+		if churn > 0 {
+			barLen := ui.ScaledBarWidth(churn, maxChurn, barMax)
+			addBar := d.Additions * barLen / churn
+			delBar := barLen - addBar
+			bar = addStyle.Render(strings.Repeat("+", addBar)) +
+				delStyle.Render(strings.Repeat("-", delBar))
+		}
 
 		fileWord := "files"
 		if d.FileCount == 1 {
@@ -176,12 +178,14 @@ func renderFiles(b *strings.Builder, files []FileChurn, termWidth int) {
 		path := runewidth.Truncate(f.Path, maxPath, "…")
 		churn := f.Additions + f.Deletions
 
-		barLen := ui.ScaledBarWidth(churn, maxChurn, barMax)
-		addBar := f.Additions * barLen / churn
-		delBar := barLen - addBar
-
-		bar := addStyle.Render(strings.Repeat("+", addBar)) +
-			delStyle.Render(strings.Repeat("-", delBar))
+		bar := ""
+		if churn > 0 {
+			barLen := ui.ScaledBarWidth(churn, maxChurn, barMax)
+			addBar := f.Additions * barLen / churn
+			delBar := barLen - addBar
+			bar = addStyle.Render(strings.Repeat("+", addBar)) +
+				delStyle.Render(strings.Repeat("-", delBar))
+		}
 
 		fmt.Fprintf(b, "  %-*s %4d %s  %s\n",
 			maxPath, path,
@@ -212,11 +216,13 @@ func renderAuthors(b *strings.Builder, authors []AuthorSummary, termWidth int) {
 	for i, a := range authors {
 		name := runewidth.Truncate(a.Name, maxName, "…")
 
-		barLen := ui.ScaledBarWidth(a.Commits, topCommits, barMax)
-
-		palette := ui.CommitPalette[i%len(ui.CommitPalette)]
-		barColor := ui.C(palette.Light, palette.Dark)
-		bar := lipgloss.NewStyle().Foreground(barColor).Render(strings.Repeat("█", barLen))
+		bar := ""
+		if len(authors) > 1 {
+			barLen := ui.ScaledBarWidth(a.Commits, topCommits, barMax)
+			palette := ui.CommitPalette[i%len(ui.CommitPalette)]
+			barColor := ui.C(palette.Light, palette.Dark)
+			bar = lipgloss.NewStyle().Foreground(barColor).Render(strings.Repeat("█", barLen))
+		}
 
 		fmt.Fprintf(b, "  %-*s %4d %s  %s\n",
 			maxName,

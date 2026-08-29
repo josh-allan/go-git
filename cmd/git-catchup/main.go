@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/charmbracelet/fang"
 	"github.com/charmbracelet/x/term"
@@ -42,9 +43,11 @@ func run(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	branch := "main"
+	branch := ""
 	if len(args) > 0 {
 		branch = args[0]
+	} else {
+		branch = defaultBranch(repo)
 	}
 
 	since, _ := cmd.Flags().GetString("since")
@@ -72,6 +75,22 @@ func run(cmd *cobra.Command, args []string) error {
 	full, _ := cmd.Flags().GetBool("full")
 	rendered := catchup.Render(summary, width, full)
 	return differ.Page(rendered, width, height)
+}
+
+func defaultBranch(repo *git.Repo) string {
+	out, err := repo.Git("symbolic-ref", "refs/remotes/origin/HEAD")
+	if err == nil {
+		out = strings.TrimSpace(out)
+		if ref, ok := strings.CutPrefix(out, "refs/remotes/origin/"); ok {
+			return ref
+		}
+	}
+	for _, name := range []string{"main", "master", "trunk"} {
+		if _, err := repo.Git("rev-parse", "--verify", name); err == nil {
+			return name
+		}
+	}
+	return "HEAD"
 }
 
 func inferSince(repo *git.Repo, branch string) string {
