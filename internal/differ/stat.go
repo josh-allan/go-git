@@ -21,10 +21,7 @@ func RenderStat(files []DiffFile, termWidth int) string {
 	maxChanges := 0
 
 	for i, f := range files {
-		name := f.NewName
-		if strings.HasPrefix(name, "b/") {
-			name = name[2:]
-		}
+		name := strings.TrimPrefix(f.NewName, "b/")
 		if len(name) > maxNameLen {
 			maxNameLen = len(name)
 		}
@@ -72,11 +69,11 @@ func RenderStat(files []DiffFile, termWidth int) string {
 				removedStyle.Render(strings.Repeat("-", remBar))
 		}
 
-		b.WriteString(fmt.Sprintf(" %-*s | %4d %s\n", maxNameLen, s.name, total, bar))
+		fmt.Fprintf(&b, " %-*s | %4d %s\n", maxNameLen, s.name, total, bar)
 	}
 
-	b.WriteString(fmt.Sprintf(" %d files changed, %d insertions(+), %d deletions(-)\n",
-		len(files), totalAdded, totalRemoved))
+	fmt.Fprintf(&b, " %d files changed, %d insertions(+), %d deletions(-)\n",
+		len(files), totalAdded, totalRemoved)
 
 	return b.String()
 }

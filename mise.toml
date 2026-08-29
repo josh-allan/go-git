@@ -1,0 +1,37 @@
+[tools]
+go = "1.26.5"
+golangci-lint = "2.13.2"
+
+[tasks.setup]
+description = "Install dev tools and configure git hooks"
+run = """
+go install golang.org/x/tools/cmd/goimports@latest
+git config core.hooksPath .githooks
+"""
+
+[tasks.fmt]
+description = "Format Go code"
+run = """
+goimports -w . 2>/dev/null || true
+gofmt -w .
+"""
+
+[tasks.lint]
+description = "Run linters"
+run = "golangci-lint run ./..."
+
+[tasks.vet]
+description = "Run go vet"
+run = "go vet ./..."
+
+[tasks.build]
+description = "Build all binaries"
+run = "go build ./..."
+
+[tasks.check]
+description = "Run all checks (fmt, vet, lint, build)"
+depends = ["fmt", "vet", "lint", "build"]
+
+[tasks.install]
+description = "Install all binaries to GOBIN"
+run = "go install ./cmd/..."

@@ -33,9 +33,9 @@ var (
 )
 
 type sidePair struct {
-	leftNum  int
-	leftLine *Line
-	rightNum int
+	leftNum   int
+	leftLine  *Line
+	rightNum  int
 	rightLine *Line
 }
 
@@ -57,10 +57,7 @@ func Render(files []DiffFile, termWidth int) string {
 }
 
 func renderFile(b *strings.Builder, file DiffFile, termWidth int) {
-	name := file.NewName
-	if strings.HasPrefix(name, "b/") {
-		name = name[2:]
-	}
+	name := strings.TrimPrefix(file.NewName, "b/")
 
 	b.WriteString(fileStyle.Render("── " + name + " "))
 	remaining := termWidth - len(name) - 4
