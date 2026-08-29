@@ -1,10 +1,10 @@
-## Go-git
+## go-git
 
 This started as a direct port of @viqueen's [git workspaces](https://github.com/viqueen/git-workspaces):
 
-* `git-recent` -- list most recent git branches
-* `git-squashed` -- list (and delete) all squashed branches
-* `git-merged` -- list (and delete) all merged branches
+* `git-recent` -- list most recent git branches that you have locally
+* `git-squashed` -- list (and delete) all squashed branches that you still have locally
+* `git-merged` -- list (and delete) all merged branches that you still have
 
 With some new commands added in:
 
@@ -23,5 +23,5 @@ mise run install
 ## Contributing
 
 ```
-mise run setup 
+mise run setup
 ```
