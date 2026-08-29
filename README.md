@@ -19,13 +19,11 @@ Requires at minimum Go 1.26
 mise run install
 ```
 
-`mise run install` installs to GOBIN.
-
 ## Contributing
 
 ```
 mise run setup 
 ```
 
-This installs both goimports and configures the relevant git hooks.
+[This](2026-08-29_this.md) installs both goimports and configures the relevant git hooks.
 
