@@ -19,7 +19,7 @@ type BlameLine struct {
 }
 
 func Run(repo *git.Repo, file string) ([]BlameLine, error) {
-	output, err := repo.Git("blame", "--porcelain", file)
+	output, err := repo.Git("blame", "--porcelain", "--use-mailmap", file)
 	if err != nil {
 		return nil, fmt.Errorf("running git blame: %w", err)
 	}
