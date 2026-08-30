@@ -11,6 +11,7 @@ With some new commands added in:
 * `git-differ` -- a side-by-side diff pager, which also covers `--cached` and `--stat`
 * `git-who` -- file ownership and contributor breakdown by repo, directory, or file
 * `git-catchup` -- what changed on a branch since you last looked
+* <img width="3014" height="944" alt="image" src="https://github.com/user-attachments/assets/483e66b5-bb94-45aa-9c6e-ab7a89b0cb93" />
 
 ## Installation
 
