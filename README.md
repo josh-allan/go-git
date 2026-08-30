@@ -21,7 +21,8 @@ With some new commands added in:
 * <img width="3024" height="458" alt="image" src="https://github.com/user-attachments/assets/5ced803f-2f7b-408f-a68c-3277924288b1" />
 
 * `git-catchup` -- what changed on a branch since you last looked
-* <img width="3014" height="944" alt="image" src="https://github.com/user-attachments/assets/483e66b5-bb94-45aa-9c6e-ab7a89b0cb93" />
+* <img width="3024" height="472" alt="image" src="https://github.com/user-attachments/assets/d4c1eb55-0e56-4120-af9f-fa82e24a91a0" />
+
 
 ## Installation
 
