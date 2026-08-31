@@ -33,11 +33,6 @@ func Squashed(repo *git.Repo, target string, forceDelete bool) error {
 		return fmt.Errorf("running form: %w", err)
 	}
 
-	flag := "-d"
-	if forceDelete {
-		flag = "-D"
-	}
-
-	deleteBranches(repo, selected, flag)
+	deleteBranches(repo, selected, "-D")
 	return nil
 }
